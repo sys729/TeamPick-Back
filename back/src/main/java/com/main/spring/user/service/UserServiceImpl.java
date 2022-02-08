@@ -26,6 +26,7 @@ public class UserServiceImpl implements UserService {
         if(userSignUpDTO == null){
             throw new RuntimeException("Invalid arguments");
         }
+        //해당 유저 아이디가 이미 존재하면
         if(userRepository.existsByUsername(userSignUpDTO.getUsername())){
             throw new RuntimeException("User already exists");
         }
@@ -40,14 +41,4 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
     }
 
-
-    public User getByCredentials(String username, String password, PasswordEncoder encoder){
-
-        User user = userRepository.findByUsername(username);
-
-        if(user != null && encoder.matches(password,user.getPassword())){
-            return user;
-        }
-        return null;
-    }
 }

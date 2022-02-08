@@ -6,5 +6,4 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 public interface UserService {
     void signUp(UserSignUpDTO userSignUpDTO);
-    User getByCredentials(String username, String password, PasswordEncoder encoder);
 }

@@ -70,7 +70,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
             response.addHeader(JwtProperties.HEADER_STRING,JwtProperties.TOKEN_PREFIX+token);
             response.setContentType("application/json");
             response.setCharacterEncoding("UTF-8");
-            response.getWriter().write(objectMapper.writeValueAsString(new LoginResponse(token,"로그인 성공")));
+            response.getWriter().write(objectMapper.writeValueAsString(new LoginResponse(JwtProperties.TOKEN_PREFIX+token,"로그인 성공")));
 
     }
 
@@ -87,7 +87,6 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 
     //JWT 토큰 생성
     public String create(CustomUserDetails user){
-
 
         return JWT.create()
                 .withSubject(user.getUsername())
