@@ -50,7 +50,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .addFilter(new JwtAuthenticationFilter(authenticationManager()))
                 .addFilter(new JwtAuthorizationFilter(authenticationManager(), userRepository))
                 .authorizeRequests()//URL 별 권한 관리 설정 시작
-                .antMatchers("/signup","/loginTest").permitAll()
+                .antMatchers("/signup","/loginTest","/oauth/jwt/google").permitAll()
                 .antMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .anyRequest().access("hasRole('ROLE_USER')");
 

@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Map;
+
 @Slf4j
 @RequiredArgsConstructor
 @RestController
@@ -30,6 +32,13 @@ public class UserController {
         }
 
     }
+
+    @PostMapping("/oauth/jwt/google")
+    public String googleOauth (@RequestBody Map<String, Object> requestMap){
+        return userService.oauthLogin(requestMap);
+    }
+
+
     @GetMapping("/test")
     public String test1(){
         return "test1";
