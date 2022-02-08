@@ -19,27 +19,27 @@ public class User extends AuditingEntity{
 
 
     @Column(nullable = false,length = 100)
-    private String username;
+    private String username; //유저 아이디
 
     @Column(nullable = false,length = 100)
-    private String password;
+    private String password; // 비밀번호
 
     @Column(nullable = false,length = 100)
-    private String email;
+    private String email; // 이메일
 
     @Column(nullable = false,length = 50)
-    private String name;
+    private String name; // 이름
 
-    private int age;
+    private int age; //나이 (정수)
 
     @Column(length = 50)
-    private String role;
+    private String role; // 권한
+
     @Column(length = 10)
     private String provider;
+
     @Column(length = 100)
     private String providerId;
-
-
 
 
 }
