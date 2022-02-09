@@ -1,5 +1,6 @@
 package com.main.spring.security;
 
+import com.main.spring.Entity.RefreshTokenRepository;
 import com.main.spring.Entity.UserRepository;
 import com.main.spring.security.auth.DetailService;
 import com.main.spring.security.jwt.JwtAuthenticationFilter;
@@ -35,6 +36,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    RefreshTokenRepository refreshTokenRepository;
+
     @Override
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
         auth.userDetailsService(detailService).passwordEncoder(bCryptPasswordEncoder());
@@ -47,10 +51,10 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .and()
                 .httpBasic().disable()
                 .formLogin().disable()
-                .addFilter(new JwtAuthenticationFilter(authenticationManager()))
+                .addFilter(new JwtAuthenticationFilter(authenticationManager(),refreshTokenRepository))
                 .addFilter(new JwtAuthorizationFilter(authenticationManager(), userRepository))
                 .authorizeRequests()//URL 별 권한 관리 설정 시작
-                .antMatchers("/signup","/loginTest","/oauth/jwt/google").permitAll()
+                .antMatchers("/signup","/loginTest","/oauth/jwt/google","/token/refresh").permitAll()
                 .antMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .anyRequest().access("hasRole('ROLE_USER')");
 

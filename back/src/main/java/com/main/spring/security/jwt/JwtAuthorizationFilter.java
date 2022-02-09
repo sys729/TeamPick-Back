@@ -5,6 +5,7 @@ import com.auth0.jwt.algorithms.Algorithm;
 import com.main.spring.Entity.User;
 import com.main.spring.Entity.UserRepository;
 import com.main.spring.security.auth.CustomUserDetails;
+import com.sun.xml.bind.v2.TODO;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -31,11 +32,13 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
         this.userRepository = userRepository;
     }
 
+
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws IOException, ServletException {
         log.info("AuthorizationFilter running");
 
-        String header = request.getHeader(JwtProperties.HEADER_STRING);
+        String header = request.getHeader(JwtProperties.ACCESS_TOKEN_HEADER_STRING);
 
         if(header == null || !header.startsWith(JwtProperties.TOKEN_PREFIX)){
             chain.doFilter(request,response);
@@ -43,9 +46,12 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
         }
 
         //JWT 토큰 검증
-        String token = request.getHeader(JwtProperties.HEADER_STRING).replace(JwtProperties.TOKEN_PREFIX, "");
+        String token = request.getHeader(JwtProperties.ACCESS_TOKEN_HEADER_STRING).replace(JwtProperties.TOKEN_PREFIX, "");
 
-        // 서명
+        //TODO: 현재 Access Token 으로 서명하기 때문에, 액세스 토큰 만료 시, /token/refresh 동작 X
+        // RefreshToken 으로 서명을 해야하는가
+
+        // 서명 ( 유효한 토큰인지 확인 )
         String username = JWT.require(Algorithm.HMAC512(JwtProperties.SECRET)).build().verify(token)
                 .getClaim("username").asString();
 

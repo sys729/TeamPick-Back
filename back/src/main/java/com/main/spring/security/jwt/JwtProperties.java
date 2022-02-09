@@ -7,7 +7,9 @@ import java.util.Date;
 public interface JwtProperties {
 
     String SECRET ="springBack";
-    Date EXPIRY_DATE = Date.from(Instant.now().plus(1, ChronoUnit.DAYS));
+    Date REFRESH_EXPIRY_DATE = Date.from(Instant.now().plus(7, ChronoUnit.DAYS));
+    Date ACCESS_EXPIRY_DATE = Date.from(Instant.now().plus(10, ChronoUnit.MINUTES));
     String TOKEN_PREFIX = "Bearer ";
-    String HEADER_STRING = "Authorization";
+    String ACCESS_TOKEN_HEADER_STRING = "Authorization";
+
 }
