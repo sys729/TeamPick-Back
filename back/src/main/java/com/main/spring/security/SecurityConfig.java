@@ -5,6 +5,7 @@ import com.main.spring.Entity.UserRepository;
 import com.main.spring.security.auth.DetailService;
 import com.main.spring.security.jwt.JwtAuthenticationFilter;
 import com.main.spring.security.jwt.JwtAuthorizationFilter;
+import com.main.spring.security.jwt.TokenProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -39,6 +40,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
     @Autowired
     RefreshTokenRepository refreshTokenRepository;
 
+    @Autowired
+    TokenProvider tokenProvider;
+
     @Override
     protected void configure(AuthenticationManagerBuilder auth) throws Exception {
         auth.userDetailsService(detailService).passwordEncoder(bCryptPasswordEncoder());
@@ -51,10 +55,10 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .and()
                 .httpBasic().disable()
                 .formLogin().disable()
-                .addFilter(new JwtAuthenticationFilter(authenticationManager(),refreshTokenRepository))
-                .addFilter(new JwtAuthorizationFilter(authenticationManager(), userRepository))
+                .addFilter(new JwtAuthenticationFilter(authenticationManager(),refreshTokenRepository,tokenProvider))
+                .addFilter(new JwtAuthorizationFilter(authenticationManager(), userRepository,refreshTokenRepository,tokenProvider))
                 .authorizeRequests()//URL 별 권한 관리 설정 시작
-                .antMatchers("/signup","/loginTest","/oauth/jwt/google","/token/refresh").permitAll()
+                .antMatchers("/signup","/loginTest","/oauth/jwt/google","/token/refresh","/error").permitAll()
                 .antMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .anyRequest().access("hasRole('ROLE_USER')");
 

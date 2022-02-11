@@ -31,6 +31,11 @@ dependencies {
 	testImplementation 'org.springframework.security:spring-security-test'
 	//oauth2 로그인을 위한 의존성 추가
 	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+
+	implementation 'io.jsonwebtoken:jjwt-api:0.11.2'
+	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.2',
+			'io.jsonwebtoken:jjwt-jackson:0.11.2'
+
 }
 
 tasks.named('test') {

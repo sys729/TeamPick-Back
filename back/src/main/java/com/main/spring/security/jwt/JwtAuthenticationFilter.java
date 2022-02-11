@@ -1,8 +1,6 @@
 package com.main.spring.security.jwt;
 
 
-import com.auth0.jwt.JWT;
-import com.auth0.jwt.algorithms.Algorithm;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.main.spring.Entity.RefreshToken;
 import com.main.spring.Entity.RefreshTokenRepository;
@@ -11,7 +9,6 @@ import com.main.spring.user.dto.LoginResponse;
 import com.main.spring.user.dto.UserLoginDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -24,7 +21,6 @@ import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.Date;
 
 
 //login 요청시 동작 필터
@@ -35,6 +31,8 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
     private final AuthenticationManager authenticationManager;
 
     private final RefreshTokenRepository refreshTokenRepository;
+
+    private final TokenProvider tokenProvider;
 
     // /login 시도를 위해 실행되는 함수
     @Override
@@ -70,14 +68,18 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
     protected void successfulAuthentication(HttpServletRequest request, HttpServletResponse response, FilterChain chain, Authentication authResult) throws IOException, ServletException {
         CustomUserDetails customUserDetails = (CustomUserDetails) authResult.getPrincipal();
 
-            String accessToken = createAccessToken(customUserDetails);
+            String accessToken = tokenProvider.createAccessToken(customUserDetails.getUsername());
             String refreshToken = null;
 
             // 리프레시토큰 디비에 리프레시 토큰이 없다면. ( 전에 수동으로 로그아웃 했거나 / 리프레시 토큰 만료 시 )
             if(!refreshTokenRepository.existsByUsername(customUserDetails.getUsername())) {
                 // 새로운 리프레시 토큰 추가
-                refreshToken = createRefreshToken(customUserDetails);
+                refreshToken = tokenProvider.createRefreshToken();
                 log.info(" new Login! {}",refreshToken);
+
+                if(refreshToken != null) {
+                    refreshTokenRepository.save(new RefreshToken(customUserDetails.getUsername(),refreshToken));
+                }
 
             }
             // 존재한다면. 있던거 반환
@@ -86,6 +88,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
                 refreshToken = findRefreshToken.getToken();
                 log.info("Exists refreshToken {}", refreshToken);
             }
+
         Cookie refreshCookie = createCookie(refreshToken);
         ObjectMapper objectMapper = new ObjectMapper();
             response.addHeader(JwtProperties.ACCESS_TOKEN_HEADER_STRING,JwtProperties.TOKEN_PREFIX+accessToken);
@@ -104,36 +107,6 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         response.setCharacterEncoding("UTF-8");
         response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
         response.getWriter().write(objectMapper.writeValueAsString(new LoginResponse(null,"로그인을 다시 시도해주세요")));
-    }
-
-    //JWT Access 토큰 생성
-    public String createAccessToken(CustomUserDetails user){
-
-        return JWT.create()
-                .withSubject(user.getUsername())
-                .withIssuer("springBack")
-                .withIssuedAt(new Date())
-                .withExpiresAt(JwtProperties.ACCESS_EXPIRY_DATE)
-                .withClaim("username", user.getUsername())
-                .sign(Algorithm.HMAC512(JwtProperties.SECRET));
-
-    }
-    //JWT Refresh 토큰 생성
-    public String createRefreshToken(CustomUserDetails user){
-
-        String refreshToken = JWT.create()
-                .withIssuedAt(new Date())
-                .withExpiresAt(JwtProperties.ACCESS_EXPIRY_DATE)
-                .sign(Algorithm.HMAC512(JwtProperties.SECRET));
-
-        log.info("create! {}" , refreshToken);
-        log.info("refreshTokenRepository : {}", refreshTokenRepository.getClass());
-        if(refreshToken != null) {
-
-            RefreshToken saveRefreshToken = refreshTokenRepository.save(new RefreshToken(user.getUsername(), refreshToken));
-            return saveRefreshToken.getToken();
-        }
-        return null;
     }
 
     //refresh Token을 담을 쿠키 생성

@@ -17,7 +17,7 @@ public class RefreshToken {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(length = 150)
+    @Column(length = 50)
     private String username;
 
     @Column(length = 250)
@@ -26,5 +26,10 @@ public class RefreshToken {
     public RefreshToken(String username, String token) {
         this.username = username;
         this.token = token;
+    }
+
+    public RefreshToken updateToken(String token) {
+        this.token = token;
+        return this;
     }
 }
