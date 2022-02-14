@@ -6,6 +6,8 @@ import com.main.spring.security.auth.DetailService;
 import com.main.spring.security.jwt.JwtAuthenticationFilter;
 import com.main.spring.security.jwt.JwtAuthorizationFilter;
 import com.main.spring.security.jwt.TokenProvider;
+import com.main.spring.security.jwt.exceptionHandler.JwtAccessDeniedHandler;
+import com.main.spring.security.jwt.exceptionHandler.JwtAuthenticationEntryHandler;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -18,6 +20,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.web.AuthenticationEntryPoint;
 
 
 @EnableWebSecurity
@@ -57,6 +60,10 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .formLogin().disable()
                 .addFilter(new JwtAuthenticationFilter(authenticationManager(),refreshTokenRepository,tokenProvider))
                 .addFilter(new JwtAuthorizationFilter(authenticationManager(), userRepository,refreshTokenRepository,tokenProvider))
+                .exceptionHandling()
+//                .authenticationEntryPoint(new JwtAuthenticationEntryHandler())
+                .accessDeniedHandler(new JwtAccessDeniedHandler())
+                .and()
                 .authorizeRequests()//URL 별 권한 관리 설정 시작
                 .antMatchers("/signup","/loginTest","/oauth/jwt/google","/token/refresh","/error").permitAll()
                 .antMatchers(HttpMethod.OPTIONS, "/**").permitAll()

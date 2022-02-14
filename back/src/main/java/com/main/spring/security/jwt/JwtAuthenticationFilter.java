@@ -58,7 +58,6 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         CustomUserDetails customUserDetails = (CustomUserDetails) authentication.getPrincipal();
         log.info("customUserDetails {}",customUserDetails.getUsername());
 
-
         return authentication;
 
     }
