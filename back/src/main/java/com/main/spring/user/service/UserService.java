@@ -12,4 +12,6 @@ public interface UserService {
     void signUp(UserSignUpDTO userSignUpDTO);
     String oauthLogin(Map<String, Object> data);
     TokenDTO reissue(HttpServletRequest request);
+    void logout(String username);
+//    TokenDTO autoLoginValidate(HttpServletRequest request);
 }

@@ -1,6 +1,8 @@
 package com.main.spring.security.jwt;
 
 
+import com.main.spring.security.jwt.exceptionHandler.ErrorType;
+import com.main.spring.user.exception.CustomException;
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
@@ -9,6 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
+import javax.servlet.ServletRequest;
 import java.util.Date;
 
 import static com.main.spring.security.jwt.JwtProperties.REFRESH_EXPIRY_DATE;
@@ -45,16 +48,17 @@ public class TokenProvider {
                 .compact();
 
     }
-    public String createRefreshToken(){
+    public String createRefreshToken(String username){
 
         return Jwts.builder()
+                .claim("username", username)
                 .signWith(secretKey,SignatureAlgorithm.HS512)
                 .setExpiration(REFRESH_EXPIRY_DATE)
                 .setIssuedAt(new Date())
                 .compact();
     }
 
-    public boolean validateToken(String token){
+    public boolean validateToken(String token, ServletRequest request){
 
         //parsClaimsJws 메서드가 Base 64로 디코딩 및 파싱
         // 헤더와 페이로드를 setSigningKey로 넘어온 시크릿을 이용해 서명 후, token의 서명과 비교
@@ -65,16 +69,21 @@ public class TokenProvider {
                     .build()
                     .parseClaimsJws(token);
             return true;
-        } catch (io.jsonwebtoken.security.SecurityException | MalformedJwtException e) {
-            log.info("잘못된 JWT 서명입니다.");
+        } catch (SecurityException | MalformedJwtException  | io.jsonwebtoken.security.SignatureException e) {
+            log.info("잘못된 JWT 요청입니다.");
+            request.setAttribute("exception", "InvalidJwtException");
+//           throw new CustomException(ErrorType.InvalidJwtException);
         } catch (ExpiredJwtException e) {
             log.info("만료된 JWT 토큰입니다.");
-
+            request.setAttribute("exception","ExpiredJwtException");
+//           throw new CustomException(ErrorType.ExpiredJwtException);
         } catch (UnsupportedJwtException e) {
             log.info("지원되지 않는 JWT 토큰입니다.");
-        } catch (IllegalArgumentException e) {
-            log.info("JWT 토큰이 잘못되었습니다.");
+            request.setAttribute("exception", "UnsupportedJwtException");
+        }catch (IllegalArgumentException e){
+            log.info("JWT token compact of handler are invalid.");
         }
+
         return false;
     }
 
@@ -94,5 +103,4 @@ public class TokenProvider {
             return e.getClaims();
         }
     }
-
 }

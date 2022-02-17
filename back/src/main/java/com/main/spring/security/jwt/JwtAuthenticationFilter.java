@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.main.spring.Entity.RefreshToken;
 import com.main.spring.Entity.RefreshTokenRepository;
 import com.main.spring.security.auth.CustomUserDetails;
-import com.main.spring.user.dto.LoginResponse;
+import com.main.spring.user.dto.AccessTokenResponse;
 import com.main.spring.user.dto.UserLoginDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -73,7 +73,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
             // 리프레시토큰 디비에 리프레시 토큰이 없다면. ( 전에 수동으로 로그아웃 했거나 / 리프레시 토큰 만료 시 )
             if(!refreshTokenRepository.existsByUsername(customUserDetails.getUsername())) {
                 // 새로운 리프레시 토큰 추가
-                refreshToken = tokenProvider.createRefreshToken();
+                refreshToken = tokenProvider.createRefreshToken(customUserDetails.getUsername());
                 log.info(" new Login! {}",refreshToken);
 
                 if(refreshToken != null) {
@@ -90,12 +90,12 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 
         Cookie refreshCookie = createCookie(refreshToken);
         ObjectMapper objectMapper = new ObjectMapper();
-            response.addHeader(JwtProperties.ACCESS_TOKEN_HEADER_STRING,JwtProperties.TOKEN_PREFIX+accessToken);
+//            response.addHeader(JwtProperties.ACCESS_TOKEN_HEADER_STRING,JwtProperties.TOKEN_PREFIX+accessToken);
             response.setContentType("application/json");
             response.setCharacterEncoding("UTF-8");
             response.addCookie(refreshCookie);
             log.info("SET COOKIE = {} ", refreshCookie);
-            response.getWriter().write(objectMapper.writeValueAsString(new LoginResponse(JwtProperties.TOKEN_PREFIX+accessToken, "로그인 성공")));
+            response.getWriter().write(objectMapper.writeValueAsString(new AccessTokenResponse(JwtProperties.TOKEN_PREFIX+accessToken, "로그인 성공")));
 }
 
     //로그인 실패 시
@@ -105,7 +105,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
         response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-        response.getWriter().write(objectMapper.writeValueAsString(new LoginResponse(null,"로그인을 다시 시도해주세요")));
+        response.getWriter().write(objectMapper.writeValueAsString(new AccessTokenResponse(null,"로그인을 다시 시도해주세요")));
     }
 
     //refresh Token을 담을 쿠키 생성

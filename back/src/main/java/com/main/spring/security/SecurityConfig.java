@@ -7,7 +7,7 @@ import com.main.spring.security.jwt.JwtAuthenticationFilter;
 import com.main.spring.security.jwt.JwtAuthorizationFilter;
 import com.main.spring.security.jwt.TokenProvider;
 import com.main.spring.security.jwt.exceptionHandler.JwtAccessDeniedHandler;
-import com.main.spring.security.jwt.exceptionHandler.JwtAuthenticationEntryHandler;
+import com.main.spring.security.jwt.exceptionHandler.JwtAuthenticationEntryPoint;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -59,13 +59,13 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .httpBasic().disable()
                 .formLogin().disable()
                 .addFilter(new JwtAuthenticationFilter(authenticationManager(),refreshTokenRepository,tokenProvider))
-                .addFilter(new JwtAuthorizationFilter(authenticationManager(), userRepository,refreshTokenRepository,tokenProvider))
+                .addFilter(new JwtAuthorizationFilter(authenticationManager(), userRepository,tokenProvider))
                 .exceptionHandling()
-//                .authenticationEntryPoint(new JwtAuthenticationEntryHandler())
+                .authenticationEntryPoint(new JwtAuthenticationEntryPoint())
                 .accessDeniedHandler(new JwtAccessDeniedHandler())
                 .and()
                 .authorizeRequests()//URL 별 권한 관리 설정 시작
-                .antMatchers("/signup","/loginTest","/oauth/jwt/google","/token/refresh","/error").permitAll()
+                .antMatchers("/signup","/oauth/jwt/google","/token/refresh","/error","/autoLogin").permitAll()
                 .antMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .anyRequest().access("hasRole('ROLE_USER')");
 

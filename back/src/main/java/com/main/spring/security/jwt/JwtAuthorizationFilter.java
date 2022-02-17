@@ -36,13 +36,11 @@ import java.util.Date;
 public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
 
     private final UserRepository userRepository;
-    private final RefreshTokenRepository refreshTokenRepository;
     private final TokenProvider tokenProvider;
 
-    public JwtAuthorizationFilter(AuthenticationManager authenticationManager, UserRepository userRepository, RefreshTokenRepository refreshTokenRepository, TokenProvider tokenProvider) {
+    public JwtAuthorizationFilter(AuthenticationManager authenticationManager, UserRepository userRepository,TokenProvider tokenProvider) {
         super(authenticationManager);
         this.userRepository = userRepository;
-        this.refreshTokenRepository = refreshTokenRepository;
         this.tokenProvider = tokenProvider;
     }
 
@@ -65,8 +63,9 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
             String token = resolveToken(request);
             log.info("Token = {}", token);
 
+
             // 서명 ( 유효한 토큰인지 확인 ) 위조시 예외처리 된다.
-            if(StringUtils.hasText(token) && tokenProvider.validateToken(token)){
+            if(StringUtils.hasText(token) && tokenProvider.validateToken(token,request)){
                 String username = tokenProvider.getClaims(token).get("username").toString();
                 User user = userRepository.findByUsername(username);
                 CustomUserDetails userDetails = new CustomUserDetails(user);

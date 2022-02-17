@@ -12,12 +12,18 @@ import com.main.spring.oauth.OauthUserInfo;
 import com.main.spring.security.jwt.JwtProperties;
 import com.main.spring.security.jwt.TokenDTO;
 import com.main.spring.security.jwt.TokenProvider;
+import com.main.spring.security.jwt.exceptionHandler.ErrorType;
 import com.main.spring.user.dto.UserSignUpDTO;
+import com.main.spring.user.exception.CustomException;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.MalformedJwtException;
+import io.jsonwebtoken.UnsupportedJwtException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import javax.servlet.http.Cookie;
 import javax.servlet.http.HttpServletRequest;
 import java.util.Date;
 import java.util.Map;
@@ -90,25 +96,40 @@ public class UserServiceImpl implements UserService {
 
     }
 
-    // Token 재발급
+    public void logout(String username){
+        refreshTokenRepository.deleteTokenByUsername(username);
+    }
 
+    /**
+     *  토큰 재발급 및 자동 로그인 가능 여부
+     * @param request
+     * @return TokenDTO(newAccessToken,newRefreshToken)
+     *
+     * @Exception ExpiredJwtException 401
+     * @Exception NULL_REFRESH_TOKEN 400
+     * @Exception UNAUTHORIZEDException 401
+     * @Exception MISMATCH_REFRESH_TOKEN 401
+     */
     public TokenDTO reissue(HttpServletRequest request){
+
         String refreshToken = request.getHeader("refreshToken");
+
+        if(refreshToken == null){
+            throw new CustomException(ErrorType.NULL_REFRESH_TOKEN);
+        }
         log.info("In header refreshToken {}",refreshToken);
 
-        String expiredToken = request.getHeader(JwtProperties.ACCESS_TOKEN_HEADER_STRING).replace(JwtProperties.TOKEN_PREFIX, "");
-
-        if(!tokenProvider.validateToken(refreshToken)){
-            throw new RuntimeException("Refresh Token 이 유효하지 않음");
+        if(!tokenProvider.validateToken(refreshToken,request)){
+            throw new CustomException(ErrorType.ExpiredJwtException);
         }
-        // Access Token에서 username 가져온다.
-        String username = tokenProvider.getClaims(expiredToken).get("username").toString();
+
+        String username = tokenProvider.getClaims(refreshToken).get("username").toString();
         log.info("username = {}", username);
 
         // 저장소에서 username 을 기반으로 Refresh Token값을 가져온다.
         RefreshToken findRefreshToken = refreshTokenRepository.findByUsername(username);
         if(findRefreshToken == null){
-            throw new RuntimeException("로그아웃 된 사용자입니다.");
+            throw new CustomException(ErrorType.UNAUTHORIZEDException);
         }
 
         log.info("findRefreshToken = {}",findRefreshToken.getToken());
@@ -116,11 +137,12 @@ public class UserServiceImpl implements UserService {
 
         // Refresh Token이 일치하는지 검사한다.
         if(!findRefreshToken.getToken().equals(refreshToken)){
-            throw new RuntimeException("Refresh Token 이 일치하지 않습니다.");
+            throw new CustomException(ErrorType.MISMATCH_REFRESH_TOKEN);
         }
+
         // 새로운 토큰을 생성한다.
         String newAccessToken = tokenProvider.createAccessToken(username);
-        String newRefreshToken = tokenProvider.createRefreshToken();
+        String newRefreshToken = tokenProvider.createRefreshToken(username);
 
         // 새로운 Refresh Token을 저장소에 업데이트 한다.
         RefreshToken newRT = findRefreshToken.updateToken(newRefreshToken);
